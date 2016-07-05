@@ -1,0 +1,64 @@
+#!/usr/bin/python
+
+# This program reads in password candidates from stdin and tries to crack 
+# as many passwords as possible from the yahoo hashes by using the salt 
+# and username obtained from previous parts of the assignment. 
+
+import sys
+import hashlib
+import string
+
+# Open the yahoo_hashes file from the command line arguments 
+fileName = str(sys.argv[1])
+fo = open(fileName, "r+")
+contents = fo.read()
+
+# Split file contents into lines based on newlines
+lines =  contents.split("\n")
+usernamesAndHashes = []
+
+for line in lines:
+    userInfo = line.split(":")
+    usernamesAndHashes.append(userInfo)
+
+passwordCandidates = []
+
+# Read in password candidates from stdin
+for word in sys.stdin:
+    lineInfo = word.split("\n")
+    # Only add valid, not empty candidates
+    if len(lineInfo) >= 1:
+        passwordCandidates.append(lineInfo[0])
+   
+# Hardcoded salt found in previous program
+salt = "y!"
+
+usersToCrack = len(usernamesAndHashes)
+crackedCounter = 0
+counter = 0
+cracked = []
+
+# For every username, use all the candidate passwords to see if we can 
+# generate a matching hash. If so, we have cracked that password. 
+for user in usernamesAndHashes:
+    # If the username input is the wrong length, move on to next user
+    if len(user) != 2:
+        continue    
+    
+    # Try hashing every candidate 
+    for candidate in passwordCandidates:
+        # Build password combination to be hashed
+        passwordCombo = salt + ":" + user[0] + ":" + candidate
+        hashValue = hashlib.sha1(passwordCombo).hexdigest()
+        # If the newly generated hash value is equal to the hash value 
+        # Already associated with the user, we have cracked a password
+        if hashValue == user[1]:
+            crackedCounter += 1
+            cracked.append(user[0] + ":" + candidate)
+            break
+    counter += 1
+
+# Print out cracked passwords so that they can be redirected to cracked.txt
+for crackedPassword in cracked:
+    print crackedPassword
+

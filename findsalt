@@ -1,0 +1,61 @@
+#!/usr/bin/python
+
+# This program takes in a username, password, and hash from the command line 
+# and uses the information to find the salt used to hash the password info. 
+
+import sys
+import string
+import hashlib
+
+# Read in command line arguments
+username = str(sys.argv[1])
+password = sys.argv[2]
+hashValue = str(sys.argv[3])
+
+characters = []
+saltCandidates = []
+
+# Build a 2D array of all printable ascii characters to generate salt 
+# candidates
+for i in range(0, 2):
+    characters.append([])
+    
+    for j in range(32, 127):    
+        characters[i].append(chr(j))
+
+# Using the same technique from part 1 of the assignment, generate 
+# salt candidates in the 2D array by updating the counters array
+counters = [0, 0]
+
+while (1):
+    newSalt = ""
+    newSalt += characters[0][counters[0]] + characters[1][counters[1]] 
+
+    # Add new generated salt to list of candidates
+    saltCandidates.append(newSalt)
+    index = 1
+
+    # Starting from the right edge of the array, move the index in and 
+    # update the counters
+    while ((index >= 0) and (counters[index] == len(characters[index])-1)):
+        counters[index] = 0
+        index -= 1
+
+    # If the index has reached the leftmost edge of the array, we are done
+    if (index != -1):
+        counters[index] += 1
+    else:
+        break
+
+# Try each salt generated from above and compare the hash the values to 
+# see if we've found the correct salt
+for salt in saltCandidates:
+    passwordCombo = salt + ":" +  username + ":" + password
+    hashCandidate = hashlib.sha1(passwordCombo).hexdigest()
+
+    # If the candidate hash and hashvalue are the same, we've found the salt
+    if hashCandidate == hashValue:
+        print "Success! Salt is: ", salt
+        break    
+
+
